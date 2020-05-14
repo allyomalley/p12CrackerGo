@@ -1,17 +1,17 @@
 package main
 
 import (
-	"fmt"
-	"os"
-	"io/ioutil"
 	"bufio"
-	"sync"
-	"strconv"
 	"crypto/rsa"
-	"encoding/pem"
 	"crypto/x509"
-	"golang.org/x/crypto/pkcs12"
+	"encoding/pem"
+	"fmt"
 	"github.com/fatih/color"
+	"golang.org/x/crypto/pkcs12"
+	"io/ioutil"
+	"os"
+	"strconv"
+	"sync"
 )
 
 var crackedPassword string
@@ -42,13 +42,13 @@ func main() {
 	scanner := bufio.NewScanner(targetFile)
 	scanner.Split(bufio.ScanLines)
 
-	key_bytes, err := ioutil.ReadFile(p12Path)
+	p12Bytes, err := ioutil.ReadFile(p12Path)
 	if err != nil {
 		panic(err)
 	}
-	
+
 	fmt.Println("\nBrute forcing...")
-	crack(scanner, key_bytes, threads)
+	crack(scanner, p12Bytes, threads)
 	if crackedPassword != "" {
 		color.Green("Match!")
 		fmt.Println("\n" + crackedPrivateKey)
@@ -62,30 +62,30 @@ func main() {
 
 func guess(p12Bytes []byte, password string) string {
 	privateKey, _, err := pkcs12.Decode(p12Bytes, password)
-    if err == pkcs12.ErrIncorrectPassword {
-   		return ""
-    }
-    if err != nil {
-    	panic(err)
-    }
+	if err == pkcs12.ErrIncorrectPassword {
+		return ""
+	}
+	if err != nil {
+		panic(err)
+	}
 
-    keyBytes := x509.MarshalPKCS1PrivateKey(privateKey.(*rsa.PrivateKey))
-    keyPem := pem.EncodeToMemory(
-            &pem.Block{
-                    Type:  "RSA PRIVATE KEY",
-                    Bytes: keyBytes,
-            },
-    )
-    return string(keyPem)
+	keyBytes := x509.MarshalPKCS1PrivateKey(privateKey.(*rsa.PrivateKey))
+	keyPem := pem.EncodeToMemory(
+		&pem.Block{
+			Type:  "RSA PRIVATE KEY",
+			Bytes: keyBytes,
+		},
+	)
+	return string(keyPem)
 }
 
-func crack(scanner *bufio.Scanner, p12Bytes []byte, threads int) {	
+func crack(scanner *bufio.Scanner, p12Bytes []byte, threads int) {
 	semaphore := make(chan bool, threads)
 	lineNo := 0
 	for scanner.Scan() {
 		lineNo = lineNo + 1
 		semaphore <- true
-		
+
 		go func(password string, line int) {
 			decryptedKey := guess(p12Bytes, password)
 			if decryptedKey != "" {
@@ -96,7 +96,7 @@ func crack(scanner *bufio.Scanner, p12Bytes []byte, threads int) {
 				resultsLock.Unlock()
 			}
 			<-semaphore
-		} (scanner.Text(), lineNo)
+		}(scanner.Text(), lineNo)
 	}
 
 	for i := 0; i < cap(semaphore); i++ {
