@@ -3,7 +3,7 @@
 A simple tool to concurrently brute force a password-protected PKCS#12 (PFX/P12) file. This tool accomplishes the same result as my [p12Cracker](https://github.com/allyomalley/p12Cracker) script, but this time written in Go with added concurrency for much faster cracking.
   
 
-![ScreenShot](https://raw.githubusercontent.com/allyomalley/p12CrackerGo/image/output.png)
+![ScreenShot](https://raw.githubusercontent.com/allyomalley/p12CrackerGo/master/image/output.png)
 
 ## Installation
 
